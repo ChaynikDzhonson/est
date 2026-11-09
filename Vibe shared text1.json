@@ -1,0 +1,1251 @@
+{
+  "name": "Avalanche",
+  "display_name": "Лавина",
+  "description": "Зимний аркадный забег: процедурная снежная трасса, живая лавина из блоков догоняет игроков. Старт — ПКМ снежком, очередь с ожиданием 2 игроков. Смерть = возврат на чекпоинт. Первый дошедший до финиша побеждает.",
+  "handlers": [
+    {
+      "type": "event",
+      "position": 0,
+      "event": "player_interact",
+      "operations": [
+        {
+          "action": "if_game_event_item_equals",
+          "values": [
+            { "name": "items", "value": { "type": "item", "item": "{Count:1b,id:\"minecraft:snowball\"}" } },
+            { "name": "comparison_mode", "value": { "type": "enum", "enum": "TYPE_ONLY" } }
+          ],
+          "operations": [
+            { "action": "game_cancel_event", "values": [] },
+            {
+              "action": "call_function",
+              "values": [
+                { "name": "function_name", "value": { "type": "text", "text": "AV.round.start", "parsing": "plain" } },
+                { "name": "args", "value": { "type": "map", "values": {} } }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "position": 1,
+      "name": "AV.round.start",
+      "values": [
+        { "name": "parameters", "value": { "type": "array", "values": [] } },
+        { "name": "is_hidden", "value": { "type": "enum", "enum": "TRUE" } },
+        { "name": "icon", "value": { "type": "item", "item": "{Count:1b,id:\"minecraft:snowball\"}" } }
+      ],
+      "operations": [
+        { "action": "select_player_by_name", "values": [ { "name": "name_or_uuid", "value": { "type": "text", "text": "%player%", "parsing": "plain" } } ] },
+        {
+          "action": "set_variable_get_map_value_single",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "q", "scope": "local" } },
+            { "name": "map", "value": { "type": "variable", "variable": "av.queue", "scope": "game" } },
+            { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+            { "name": "default_value", "value": {} }
+          ]
+        },
+        {
+          "action": "if_variable_equals",
+          "values": [
+            { "name": "value", "value": { "type": "number", "number": "%math(%var_local(q) + %var(av.run))" } },
+            { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 0 } ] } },
+            { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+          ],
+          "operations": [
+            {
+              "action": "set_variable_put_map_value",
+              "values": [
+                { "name": "map", "value": { "type": "variable", "variable": "av.queue", "scope": "game" } },
+                { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                { "name": "value", "value": { "type": "number", "number": 1 } }
+              ]
+            },
+            {
+              "action": "set_variable_value",
+              "values": [
+                { "name": "variable", "value": { "type": "variable", "variable": "av.qcount", "scope": "game" } },
+                { "name": "value", "value": { "type": "number", "number": "%math(%var(av.qcount) + 1)" } }
+              ]
+            },
+            {
+              "action": "player_send_message",
+              "values": [
+                { "name": "messages", "value": { "type": "array", "values": [ { "type": "text", "text": "&b❄ Ты в очереди: &f%var(av.qcount)/2", "parsing": "legacy" } ] } },
+                { "name": "merging", "value": { "type": "enum", "enum": "SPACES" } }
+              ]
+            },
+            {
+              "action": "player_play_sound",
+              "values": [
+                { "name": "sound", "value": { "type": "sound", "sound": "minecraft:entity.experience_orb.pickup", "pitch": 1.0, "volume": 1.0 } },
+                { "name": "location", "value": { "type": "game_value", "game_value": "location", "selection": "{\"type\":\"default\"}" } }
+              ]
+            },
+            {
+              "action": "if_variable_greater_or_equals",
+              "values": [
+                { "name": "value", "value": { "type": "variable", "variable": "av.qcount", "scope": "game" } },
+                { "name": "compare", "value": { "type": "number", "number": 2 } }
+              ],
+              "operations": [
+                {
+                  "action": "call_function",
+                  "values": [
+                    { "name": "function_name", "value": { "type": "text", "text": "AV.round.launch", "parsing": "plain" } },
+                    { "name": "args", "value": { "type": "map", "values": {} } }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "action": "else",
+          "values": [],
+          "operations": [
+            {
+              "action": "player_send_message",
+              "values": [
+                { "name": "messages", "value": { "type": "array", "values": [ { "type": "text", "text": "&cИгра уже идёт или ты уже в очереди!", "parsing": "legacy" } ] } },
+                { "name": "merging", "value": { "type": "enum", "enum": "SPACES" } }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "position": 2,
+      "name": "AV.round.launch",
+      "values": [
+        { "name": "parameters", "value": { "type": "array", "values": [] } },
+        { "name": "is_hidden", "value": { "type": "enum", "enum": "TRUE" } },
+        { "name": "icon", "value": { "type": "item", "item": "{Count:1b,id:\"minecraft:snowball\"}" } }
+      ],
+      "operations": [
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.run", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": 1 } }
+          ]
+        },
+        { "action": "select_all_players", "values": [] },
+        {
+          "action": "player_send_title",
+          "values": [
+            { "name": "title", "value": { "type": "text", "text": "&b&l❄ ЛАВИНА ❄", "parsing": "legacy" } },
+            { "name": "subtitle", "value": { "type": "text", "text": "&fГенерация трассы...", "parsing": "legacy" } },
+            { "name": "fade_in", "value": { "type": "number", "number": 10 } },
+            { "name": "stay", "value": { "type": "number", "number": 40 } },
+            { "name": "fade_out", "value": { "type": "number", "number": 10 } }
+          ]
+        },
+        {
+          "action": "call_function",
+          "values": [
+            { "name": "function_name", "value": { "type": "text", "text": "AV.build", "parsing": "plain" } },
+            { "name": "args", "value": { "type": "map", "values": {} } }
+          ]
+        },
+        { "action": "select_all_players", "values": [] },
+        {
+          "action": "set_variable_get_map_value_single",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "q", "scope": "local" } },
+            { "name": "map", "value": { "type": "variable", "variable": "av.queue", "scope": "game" } },
+            { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+            { "name": "default_value", "value": {} }
+          ]
+        },
+        {
+          "action": "if_variable_equals",
+          "values": [
+            { "name": "value", "value": { "type": "variable", "variable": "q", "scope": "local" } },
+            { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 1 } ] } },
+            { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+          ],
+          "operations": [
+            { "action": "player_clear_potion_effects", "values": [] },
+            { "action": "player_heal", "values": [ { "name": "heal", "value": { "type": "number", "number": 20 } } ] },
+            {
+              "action": "player_teleport",
+              "values": [
+                { "name": "location", "value": { "type": "location", "x": 0, "y": 71, "z": 0 } }
+              ]
+            },
+            {
+              "action": "set_variable_put_map_value",
+              "values": [
+                { "name": "map", "value": { "type": "variable", "variable": "av.alive", "scope": "game" } },
+                { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                { "name": "value", "value": { "type": "number", "number": 1 } }
+              ]
+            },
+            {
+              "action": "set_variable_put_map_value",
+              "values": [
+                { "name": "map", "value": { "type": "variable", "variable": "av.cp", "scope": "game" } },
+                { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                { "name": "value", "value": { "type": "number", "number": 0 } }
+              ]
+            },
+            {
+              "action": "player_send_message",
+              "values": [
+                { "name": "messages", "value": { "type": "array", "values": [ { "type": "text", "text": "&bТы на старте. Приготовься бежать!", "parsing": "legacy" } ] } },
+                { "name": "merging", "value": { "type": "enum", "enum": "SPACES" } }
+              ]
+            }
+          ]
+        },
+        {
+          "action": "repeat_multi_times",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.cnt", "scope": "game" } },
+            { "name": "amount", "value": { "type": "number", "number": 5 } }
+          ],
+          "operations": [
+            { "action": "select_all_players", "values": [] },
+            {
+              "action": "player_send_title",
+              "values": [
+                { "name": "title", "value": { "type": "text", "text": "&b&l%math(6 - %var(av.cnt))", "parsing": "legacy" } },
+                { "name": "subtitle", "value": { "type": "text", "text": "&fдо старта", "parsing": "legacy" } },
+                { "name": "fade_in", "value": { "type": "number", "number": 2 } },
+                { "name": "stay", "value": { "type": "number", "number": 15 } },
+                { "name": "fade_out", "value": { "type": "number", "number": 2 } }
+              ]
+            },
+            {
+              "action": "player_play_sound",
+              "values": [
+                { "name": "sound", "value": { "type": "sound", "sound": "minecraft:block.note_block.pling", "pitch": 1.0, "volume": 1.0 } },
+                { "name": "location", "value": { "type": "game_value", "game_value": "location", "selection": "{\"type\":\"default\"}" } }
+              ]
+            },
+            {
+              "action": "control_wait",
+              "values": [
+                { "name": "duration", "value": { "type": "number", "number": 1 } },
+                { "name": "time_unit", "value": { "type": "enum", "enum": "SECONDS" } }
+              ]
+            }
+          ]
+        },
+        { "action": "select_all_players", "values": [] },
+        {
+          "action": "player_send_title",
+          "values": [
+            { "name": "title", "value": { "type": "text", "text": "&b&lБЕГИ!", "parsing": "legacy" } },
+            { "name": "subtitle", "value": { "type": "text", "text": "&7Лавина уже движется...", "parsing": "legacy" } },
+            { "name": "fade_in", "value": { "type": "number", "number": 5 } },
+            { "name": "stay", "value": { "type": "number", "number": 30 } },
+            { "name": "fade_out", "value": { "type": "number", "number": 10 } }
+          ]
+        },
+        {
+          "action": "player_play_sound",
+          "values": [
+            { "name": "sound", "value": { "type": "sound", "sound": "minecraft:entity.lightning_bolt.thunder", "pitch": 0.8, "volume": 0.7 } },
+            { "name": "location", "value": { "type": "game_value", "game_value": "location", "selection": "{\"type\":\"default\"}" } }
+          ]
+        },
+        {
+          "action": "set_variable_purge",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.queue", "scope": "game" } }
+          ]
+        },
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.qcount", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": 0 } }
+          ]
+        },
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.z", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": -30 } }
+          ]
+        },
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.delay", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": 4 } }
+          ]
+        },
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.tick", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": 0 } }
+          ]
+        },
+        {
+          "action": "start_process",
+          "values": [
+            { "name": "process_name", "value": { "type": "text", "text": "AV.avalanche", "parsing": "plain" } },
+            { "name": "target_mode", "value": { "type": "enum", "enum": "NO_TARGET" } },
+            { "name": "local_variables_mode", "value": { "type": "enum", "enum": "DONT_COPY" } },
+            { "name": "args", "value": { "type": "map", "values": {} } }
+          ]
+        },
+        {
+          "action": "start_process",
+          "values": [
+            { "name": "process_name", "value": { "type": "text", "text": "AV.checkpoints", "parsing": "plain" } },
+            { "name": "target_mode", "value": { "type": "enum", "enum": "NO_TARGET" } },
+            { "name": "local_variables_mode", "value": { "type": "enum", "enum": "DONT_COPY" } },
+            { "name": "args", "value": { "type": "map", "values": {} } }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "position": 3,
+      "name": "AV.build",
+      "values": [
+        { "name": "parameters", "value": { "type": "array", "values": [] } },
+        { "name": "is_hidden", "value": { "type": "enum", "enum": "TRUE" } },
+        { "name": "icon", "value": { "type": "item", "item": "{Count:1b,id:\"minecraft:snow_block\"}" } }
+      ],
+      "operations": [
+        {
+          "action": "game_clear_region",
+          "values": [
+            { "name": "pos_1", "value": { "type": "location", "x": -12, "y": 50, "z": -40 } },
+            { "name": "pos_2", "value": { "type": "location", "x": 12, "y": 96, "z": 215 } }
+          ]
+        },
+        {
+          "action": "game_set_region",
+          "values": [
+            { "name": "block", "value": { "type": "block", "block": "minecraft:snow_block" } },
+            { "name": "pos_1", "value": { "type": "location", "x": -6, "y": 70, "z": -8 } },
+            { "name": "pos_2", "value": { "type": "location", "x": 6, "y": 70, "z": 4 } }
+          ]
+        },
+        {
+          "action": "game_set_region",
+          "values": [
+            { "name": "block", "value": { "type": "block", "block": "minecraft:snow_block" } },
+            { "name": "pos_1", "value": { "type": "location", "x": -6, "y": 70, "z": 198 } },
+            { "name": "pos_2", "value": { "type": "location", "x": 6, "y": 70, "z": 212 } }
+          ]
+        },
+        {
+          "action": "game_set_block",
+          "values": [
+            { "name": "block", "value": { "type": "item", "item": "{Count:1b,id:\"minecraft:glowstone\"}" } },
+            { "name": "locations", "value": { "type": "array", "values": [ { "type": "location", "x": 0, "y": 71, "z": 210 } ] } },
+            { "name": "update_blocks", "value": { "type": "enum", "enum": "TRUE" } }
+          ]
+        },
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.pz", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": 8 } }
+          ]
+        },
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.py", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": 71 } }
+          ]
+        },
+        {
+          "action": "repeat_multi_times",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.i", "scope": "game" } },
+            { "name": "amount", "value": { "type": "number", "number": 48 } }
+          ],
+          "operations": [
+            {
+              "action": "set_variable_value",
+              "values": [
+                { "name": "variable", "value": { "type": "variable", "variable": "av.px", "scope": "game" } },
+                { "name": "value", "value": { "type": "number", "number": "%math(clamp(%var(av.px) + floor(random * 7) - 3, -5, 5))" } }
+              ]
+            },
+            {
+              "action": "set_variable_value",
+              "values": [
+                { "name": "variable", "value": { "type": "variable", "variable": "av.py", "scope": "game" } },
+                { "name": "value", "value": { "type": "number", "number": "%math(clamp(%var(av.py) + floor(random * 3) - 1, 69, 84))" } }
+              ]
+            },
+            {
+              "action": "set_variable_value",
+              "values": [
+                { "name": "variable", "value": { "type": "variable", "variable": "av.pz", "scope": "game" } },
+                { "name": "value", "value": { "type": "number", "number": "%math(%var(av.pz) + 4)" } }
+              ]
+            },
+            {
+              "action": "set_variable_value",
+              "values": [
+                { "name": "variable", "value": { "type": "variable", "variable": "rnd", "scope": "local" } },
+                { "name": "value", "value": { "type": "number", "number": "%math(floor(random * 5))" } }
+              ]
+            },
+            {
+              "action": "if_variable_equals",
+              "values": [
+                { "name": "value", "value": { "type": "variable", "variable": "rnd", "scope": "local" } },
+                { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 0 } ] } },
+                { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+              ],
+              "operations": [
+                {
+                  "action": "game_set_region",
+                  "values": [
+                    { "name": "block", "value": { "type": "block", "block": "minecraft:ice" } },
+                    { "name": "pos_1", "value": { "type": "location", "x": "%math(%var(av.px) - 1)", "y": "%math(%var(av.py))", "z": "%math(%var(av.pz) - 1)" } },
+                    { "name": "pos_2", "value": { "type": "location", "x": "%math(%var(av.px) + 1)", "y": "%math(%var(av.py))", "z": "%math(%var(av.pz) + 1)" } }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "else",
+              "values": [],
+              "operations": [
+                {
+                  "action": "game_set_region",
+                  "values": [
+                    { "name": "block", "value": { "type": "block", "block": "minecraft:snow_block" } },
+                    { "name": "pos_1", "value": { "type": "location", "x": "%math(%var(av.px) - 1)", "y": "%math(%var(av.py))", "z": "%math(%var(av.pz) - 1)" } },
+                    { "name": "pos_2", "value": { "type": "location", "x": "%math(%var(av.px) + 1)", "y": "%math(%var(av.py))", "z": "%math(%var(av.pz) + 1)" } }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "if_variable_equals",
+              "values": [
+                { "name": "value", "value": { "type": "variable", "variable": "av.i", "scope": "game" } },
+                { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 12 }, { "type": "number", "number": 24 }, { "type": "number", "number": 36 } ] } },
+                { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+              ],
+              "operations": [
+                {
+                  "action": "game_set_region",
+                  "values": [
+                    { "name": "block", "value": { "type": "block", "block": "minecraft:packed_ice" } },
+                    { "name": "pos_1", "value": { "type": "location", "x": "%math(%var(av.px) - 3)", "y": "%math(%var(av.py))", "z": "%math(%var(av.pz) - 2)" } },
+                    { "name": "pos_2", "value": { "type": "location", "x": "%math(%var(av.px) + 3)", "y": "%math(%var(av.py))", "z": "%math(%var(av.pz) + 2)" } }
+                  ]
+                },
+                {
+                  "action": "if_variable_equals",
+                  "values": [
+                    { "name": "value", "value": { "type": "variable", "variable": "av.i", "scope": "game" } },
+                    { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 12 } ] } },
+                    { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+                  ],
+                  "operations": [
+                    {
+                      "action": "set_variable_set_all_coordinates",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.cp1a", "scope": "game" } },
+                        { "name": "x", "value": { "type": "number", "number": "%math(%var(av.px) - 4)" } },
+                        { "name": "y", "value": { "type": "number", "number": "%math(%var(av.py) - 1)" } },
+                        { "name": "z", "value": { "type": "number", "number": "%math(%var(av.pz) - 3)" } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_set_all_coordinates",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.cp1b", "scope": "game" } },
+                        { "name": "x", "value": { "type": "number", "number": "%math(%var(av.px) + 4)" } },
+                        { "name": "y", "value": { "type": "number", "number": "%math(%var(av.py) + 3)" } },
+                        { "name": "z", "value": { "type": "number", "number": "%math(%var(av.pz) + 3)" } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_set_all_coordinates",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.cp1t", "scope": "game" } },
+                        { "name": "x", "value": { "type": "number", "number": "%math(%var(av.px))" } },
+                        { "name": "y", "value": { "type": "number", "number": "%math(%var(av.py) + 1)" } },
+                        { "name": "z", "value": { "type": "number", "number": "%math(%var(av.pz))" } }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "action": "if_variable_equals",
+                  "values": [
+                    { "name": "value", "value": { "type": "variable", "variable": "av.i", "scope": "game" } },
+                    { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 24 } ] } },
+                    { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+                  ],
+                  "operations": [
+                    {
+                      "action": "set_variable_set_all_coordinates",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.cp2a", "scope": "game" } },
+                        { "name": "x", "value": { "type": "number", "number": "%math(%var(av.px) - 4)" } },
+                        { "name": "y", "value": { "type": "number", "number": "%math(%var(av.py) - 1)" } },
+                        { "name": "z", "value": { "type": "number", "number": "%math(%var(av.pz) - 3)" } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_set_all_coordinates",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.cp2b", "scope": "game" } },
+                        { "name": "x", "value": { "type": "number", "number": "%math(%var(av.px) + 4)" } },
+                        { "name": "y", "value": { "type": "number", "number": "%math(%var(av.py) + 3)" } },
+                        { "name": "z", "value": { "type": "number", "number": "%math(%var(av.pz) + 3)" } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_set_all_coordinates",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.cp2t", "scope": "game" } },
+                        { "name": "x", "value": { "type": "number", "number": "%math(%var(av.px))" } },
+                        { "name": "y", "value": { "type": "number", "number": "%math(%var(av.py) + 1)" } },
+                        { "name": "z", "value": { "type": "number", "number": "%math(%var(av.pz))" } }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "action": "if_variable_equals",
+                  "values": [
+                    { "name": "value", "value": { "type": "variable", "variable": "av.i", "scope": "game" } },
+                    { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 36 } ] } },
+                    { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+                  ],
+                  "operations": [
+                    {
+                      "action": "set_variable_set_all_coordinates",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.cp3a", "scope": "game" } },
+                        { "name": "x", "value": { "type": "number", "number": "%math(%var(av.px) - 4)" } },
+                        { "name": "y", "value": { "type": "number", "number": "%math(%var(av.py) - 1)" } },
+                        { "name": "z", "value": { "type": "number", "number": "%math(%var(av.pz) - 3)" } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_set_all_coordinates",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.cp3b", "scope": "game" } },
+                        { "name": "x", "value": { "type": "number", "number": "%math(%var(av.px) + 4)" } },
+                        { "name": "y", "value": { "type": "number", "number": "%math(%var(av.py) + 3)" } },
+                        { "name": "z", "value": { "type": "number", "number": "%math(%var(av.pz) + 3)" } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_set_all_coordinates",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.cp3t", "scope": "game" } },
+                        { "name": "x", "value": { "type": "number", "number": "%math(%var(av.px))" } },
+                        { "name": "y", "value": { "type": "number", "number": "%math(%var(av.py) + 1)" } },
+                        { "name": "z", "value": { "type": "number", "number": "%math(%var(av.pz))" } }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "control_wait",
+              "values": [
+                { "name": "duration", "value": { "type": "number", "number": 1 } },
+                { "name": "time_unit", "value": { "type": "enum", "enum": "TICKS" } }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "process",
+      "position": 4,
+      "name": "AV.avalanche",
+      "values": [
+        { "name": "parameters", "value": { "type": "array", "values": [] } },
+        { "name": "is_hidden", "value": { "type": "enum", "enum": "TRUE" } },
+        { "name": "icon", "value": { "type": "item", "item": "{Count:1b,id:\"minecraft:snow_block\"}" } }
+      ],
+      "operations": [
+        {
+          "action": "repeat_while",
+          "values": [
+            { "name": "value", "value": { "type": "variable", "variable": "av.z", "scope": "game" } },
+            { "name": "compare", "value": { "type": "number", "number": 205 } }
+          ],
+          "conditional": { "action": "if_variable_greater_or_equals", "is_inverted": true },
+          "operations": [
+            {
+              "action": "set_variable_value",
+              "values": [
+                { "name": "variable", "value": { "type": "variable", "variable": "av.z", "scope": "game" } },
+                { "name": "value", "value": { "type": "number", "number": "%math(%var(av.z) + 2)" } }
+              ]
+            },
+            {
+              "action": "game_set_region",
+              "values": [
+                { "name": "block", "value": { "type": "block", "block": "minecraft:snow_block" } },
+                { "name": "pos_1", "value": { "type": "location", "x": -12, "y": 50, "z": "%math(%var(av.z) - 2)" } },
+                { "name": "pos_2", "value": { "type": "location", "x": 12, "y": 96, "z": "%math(%var(av.z))" } }
+              ]
+            },
+            {
+              "action": "set_variable_value",
+              "values": [
+                { "name": "variable", "value": { "type": "variable", "variable": "av.tick", "scope": "game" } },
+                { "name": "value", "value": { "type": "number", "number": "%math(%var(av.tick) + 1)" } }
+              ]
+            },
+            {
+              "action": "if_variable_equals",
+              "values": [
+                { "name": "value", "value": { "type": "variable", "variable": "av.tick", "scope": "game" } },
+                { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 8 }, { "type": "number", "number": 16 }, { "type": "number", "number": 24 }, { "type": "number", "number": 32 } ] } },
+                { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+              ],
+              "operations": [
+                {
+                  "action": "set_variable_value",
+                  "values": [
+                    { "name": "variable", "value": { "type": "variable", "variable": "av.delay", "scope": "game" } },
+                    { "name": "value", "value": { "type": "number", "number": "%math(max(%var(av.delay) - 1, 1))" } }
+                  ]
+                },
+                { "action": "select_all_players", "values": [] },
+                {
+                  "action": "player_send_message",
+                  "values": [
+                    { "name": "messages", "value": { "type": "array", "values": [ { "type": "text", "text": "&b❄ Лавина ускоряется!", "parsing": "legacy" } ] } },
+                    { "name": "merging", "value": { "type": "enum", "enum": "SPACES" } }
+                  ]
+                },
+                {
+                  "action": "player_play_sound",
+                  "values": [
+                    { "name": "sound", "value": { "type": "sound", "sound": "minecraft:entity.lightning_bolt.thunder", "pitch": 0.7, "volume": 0.8 } },
+                    { "name": "location", "value": { "type": "game_value", "game_value": "location", "selection": "{\"type\":\"default\"}" } }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "if_variable_equals",
+              "values": [
+                { "name": "value", "value": { "type": "number", "number": "%math(%var(av.tick) % 6)" } },
+                { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 0 } ] } },
+                { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+              ],
+              "operations": [
+                { "action": "select_all_players", "values": [] },
+                {
+                  "action": "player_send_title",
+                  "values": [
+                    { "name": "title", "value": { "type": "text", "text": "&b&l❄", "parsing": "legacy" } },
+                    { "name": "subtitle", "value": { "type": "text", "text": "&7Лавина на Z: %var(av.z)", "parsing": "legacy" } },
+                    { "name": "fade_in", "value": { "type": "number", "number": 2 } },
+                    { "name": "stay", "value": { "type": "number", "number": 20 } },
+                    { "name": "fade_out", "value": { "type": "number", "number": 2 } }
+                  ]
+                }
+              ]
+            },
+            { "action": "select_all_players", "values": [] },
+            {
+              "action": "if_player_in_area",
+              "values": [
+                { "name": "location_1", "value": { "type": "location", "x": -12, "y": 50, "z": -40 } },
+                { "name": "location_2", "value": { "type": "location", "x": 12, "y": 96, "z": "%math(%var(av.z))" } },
+                { "name": "ignore_y_axis", "value": { "type": "enum", "enum": "FALSE" } },
+                { "name": "intersect_type", "value": { "type": "enum", "enum": "POINT" } },
+                { "name": "check_type", "value": { "type": "enum", "enum": "CONTAINS" } }
+              ],
+              "operations": [
+                {
+                  "action": "set_variable_get_map_value_single",
+                  "values": [
+                    { "name": "variable", "value": { "type": "variable", "variable": "al", "scope": "local" } },
+                    { "name": "map", "value": { "type": "variable", "variable": "av.alive", "scope": "game" } },
+                    { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                    { "name": "default_value", "value": {} }
+                  ]
+                },
+                {
+                  "action": "if_variable_equals",
+                  "values": [
+                    { "name": "value", "value": { "type": "variable", "variable": "al", "scope": "local" } },
+                    { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 1 } ] } },
+                    { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+                  ],
+                  "operations": [
+                    {
+                      "action": "set_variable_put_map_value",
+                      "values": [
+                        { "name": "map", "value": { "type": "variable", "variable": "av.alive", "scope": "game" } },
+                        { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                        { "name": "value", "value": { "type": "number", "number": 0 } }
+                      ]
+                    },
+                    {
+                      "action": "player_damage",
+                      "values": [
+                        { "name": "damage", "value": { "type": "number", "number": 100 } },
+                        { "name": "source", "value": { "type": "text", "text": "Лавина", "parsing": "plain" } }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            { "action": "select_all_players", "values": [] },
+            {
+              "action": "if_player_in_area",
+              "values": [
+                { "name": "location_1", "value": { "type": "location", "x": -7, "y": 69, "z": 198 } },
+                { "name": "location_2", "value": { "type": "location", "x": 7, "y": 78, "z": 212 } },
+                { "name": "ignore_y_axis", "value": { "type": "enum", "enum": "FALSE" } },
+                { "name": "intersect_type", "value": { "type": "enum", "enum": "POINT" } },
+                { "name": "check_type", "value": { "type": "enum", "enum": "CONTAINS" } }
+              ],
+              "operations": [
+                {
+                  "action": "set_variable_get_map_value_single",
+                  "values": [
+                    { "name": "variable", "value": { "type": "variable", "variable": "al", "scope": "local" } },
+                    { "name": "map", "value": { "type": "variable", "variable": "av.alive", "scope": "game" } },
+                    { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                    { "name": "default_value", "value": {} }
+                  ]
+                },
+                {
+                  "action": "if_variable_equals",
+                  "values": [
+                    { "name": "value", "value": { "type": "variable", "variable": "al", "scope": "local" } },
+                    { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 1 } ] } },
+                    { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+                  ],
+                  "operations": [
+                    {
+                      "action": "set_variable_put_map_value",
+                      "values": [
+                        { "name": "map", "value": { "type": "variable", "variable": "av.alive", "scope": "game" } },
+                        { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                        { "name": "value", "value": { "type": "number", "number": 0 } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_value",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "wname", "scope": "local" } },
+                        { "name": "value", "value": { "type": "text", "text": "%player%", "parsing": "plain" } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_value",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "w", "scope": "local" } },
+                        { "name": "value", "value": { "type": "number", "number": "%math(%entry(av.wins, %player%) + 1)" } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_put_map_value",
+                      "values": [
+                        { "name": "map", "value": { "type": "variable", "variable": "av.wins", "scope": "game" } },
+                        { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                        { "name": "value", "value": { "type": "variable", "variable": "w", "scope": "local" } }
+                      ]
+                    },
+                    {
+                      "action": "player_send_title",
+                      "values": [
+                        { "name": "title", "value": { "type": "text", "text": "&6&l🏆 ПОБЕДА!", "parsing": "legacy" } },
+                        { "name": "subtitle", "value": { "type": "text", "text": "&fТы обогнал лавину!", "parsing": "legacy" } },
+                        { "name": "fade_in", "value": { "type": "number", "number": 10 } },
+                        { "name": "stay", "value": { "type": "number", "number": 60 } },
+                        { "name": "fade_out", "value": { "type": "number", "number": 10 } }
+                      ]
+                    },
+                    {
+                      "action": "player_play_sound",
+                      "values": [
+                        { "name": "sound", "value": { "type": "sound", "sound": "minecraft:ui.toast.challenge_complete", "pitch": 1.0, "volume": 1.0 } },
+                        { "name": "location", "value": { "type": "game_value", "game_value": "location", "selection": "{\"type\":\"default\"}" } }
+                      ]
+                    },
+                    {
+                      "action": "game_launch_firework",
+                      "values": [
+                        { "name": "firework", "value": { "type": "item", "item": "{Count:1b,id:\"minecraft:firework_rocket\"}" } },
+                        { "name": "location", "value": { "type": "location", "x": 0, "y": 74, "z": 205 } },
+                        { "name": "movement", "value": { "type": "enum", "enum": "UPWARDS" } },
+                        { "name": "instant", "value": { "type": "enum", "enum": "FALSE" } }
+                      ]
+                    },
+                    { "action": "select_all_players", "values": [] },
+                    {
+                      "action": "player_send_message",
+                      "values": [
+                        { "name": "messages", "value": { "type": "array", "values": [ { "type": "text", "text": "&6🏆 &f%var_local(wname) &6— победитель раунда! Побед: %entry(av.wins, %var_local(wname))", "parsing": "legacy" } ] } },
+                        { "name": "merging", "value": { "type": "enum", "enum": "SPACES" } }
+                      ]
+                    },
+                    {
+                      "action": "set_variable_value",
+                      "values": [
+                        { "name": "variable", "value": { "type": "variable", "variable": "av.run", "scope": "game" } },
+                        { "name": "value", "value": { "type": "number", "number": 0 } }
+                      ]
+                    },
+                    { "action": "control_end_thread", "values": [] }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "control_wait",
+              "values": [
+                { "name": "duration", "value": { "type": "variable", "variable": "av.delay", "scope": "game" } },
+                { "name": "time_unit", "value": { "type": "enum", "enum": "SECONDS" } }
+              ]
+            }
+          ]
+        },
+        { "action": "select_all_players", "values": [] },
+        {
+          "action": "player_send_title",
+          "values": [
+            { "name": "title", "value": { "type": "text", "text": "&b&lЛАВИНА СГРЕБЛА ВСЁ", "parsing": "legacy" } },
+            { "name": "subtitle", "value": { "type": "text", "text": "&7Раунд окончен", "parsing": "legacy" } },
+            { "name": "fade_in", "value": { "type": "number", "number": 10 } },
+            { "name": "stay", "value": { "type": "number", "number": 60 } },
+            { "name": "fade_out", "value": { "type": "number", "number": 10 } }
+          ]
+        },
+        {
+          "action": "player_send_message",
+          "values": [
+            { "name": "messages", "value": { "type": "array", "values": [ { "type": "text", "text": "&b❄ Раунд окончен. Возьми снежок для новой очереди!", "parsing": "legacy" } ] } },
+            { "name": "merging", "value": { "type": "enum", "enum": "SPACES" } }
+          ]
+        },
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.run", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": 0 } }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "process",
+      "position": 5,
+      "name": "AV.checkpoints",
+      "values": [
+        { "name": "parameters", "value": { "type": "array", "values": [] } },
+        { "name": "is_hidden", "value": { "type": "enum", "enum": "TRUE" } },
+        { "name": "icon", "value": { "type": "item", "item": "{Count:1b,id:\"minecraft:packed_ice\"}" } }
+      ],
+      "operations": [
+        {
+          "action": "repeat_while",
+          "values": [
+            { "name": "value", "value": { "type": "variable", "variable": "av.run", "scope": "game" } },
+            { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 1 } ] } },
+            { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+          ],
+          "conditional": { "action": "if_variable_equals", "is_inverted": false },
+          "operations": [
+            { "action": "select_all_players", "values": [] },
+            {
+              "action": "if_player_in_area",
+              "values": [
+                { "name": "location_1", "value": { "type": "variable", "variable": "av.cp1a", "scope": "game" } },
+                { "name": "location_2", "value": { "type": "variable", "variable": "av.cp1b", "scope": "game" } },
+                { "name": "ignore_y_axis", "value": { "type": "enum", "enum": "FALSE" } },
+                { "name": "intersect_type", "value": { "type": "enum", "enum": "POINT" } },
+                { "name": "check_type", "value": { "type": "enum", "enum": "CONTAINS" } }
+              ],
+              "operations": [
+                {
+                  "action": "set_variable_value",
+                  "values": [
+                    { "name": "variable", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                    { "name": "value", "value": { "type": "number", "number": "%math(%entry(av.cp, %player%))" } }
+                  ]
+                },
+                {
+                  "action": "if_variable_less",
+                  "values": [
+                    { "name": "value", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                    { "name": "compare", "value": { "type": "number", "number": 1 } }
+                  ],
+                  "operations": [
+                    {
+                      "action": "set_variable_put_map_value",
+                      "values": [
+                        { "name": "map", "value": { "type": "variable", "variable": "av.cp", "scope": "game" } },
+                        { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                        { "name": "value", "value": { "type": "number", "number": 1 } }
+                      ]
+                    },
+                    {
+                      "action": "player_send_title",
+                      "values": [
+                        { "name": "title", "value": { "type": "text", "text": "&a&l✔ Чекпоинт 1", "parsing": "legacy" } },
+                        { "name": "subtitle", "value": { "type": "text", "text": "&fЛавина не прощает!", "parsing": "legacy" } },
+                        { "name": "fade_in", "value": { "type": "number", "number": 5 } },
+                        { "name": "stay", "value": { "type": "number", "number": 30 } },
+                        { "name": "fade_out", "value": { "type": "number", "number": 5 } }
+                      ]
+                    },
+                    {
+                      "action": "player_play_sound",
+                      "values": [
+                        { "name": "sound", "value": { "type": "sound", "sound": "minecraft:entity.player.levelup", "pitch": 1.5, "volume": 1.0 } },
+                        { "name": "location", "value": { "type": "game_value", "game_value": "location", "selection": "{\"type\":\"default\"}" } }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            { "action": "select_all_players", "values": [] },
+            {
+              "action": "if_player_in_area",
+              "values": [
+                { "name": "location_1", "value": { "type": "variable", "variable": "av.cp2a", "scope": "game" } },
+                { "name": "location_2", "value": { "type": "variable", "variable": "av.cp2b", "scope": "game" } },
+                { "name": "ignore_y_axis", "value": { "type": "enum", "enum": "FALSE" } },
+                { "name": "intersect_type", "value": { "type": "enum", "enum": "POINT" } },
+                { "name": "check_type", "value": { "type": "enum", "enum": "CONTAINS" } }
+              ],
+              "operations": [
+                {
+                  "action": "set_variable_value",
+                  "values": [
+                    { "name": "variable", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                    { "name": "value", "value": { "type": "number", "number": "%math(%entry(av.cp, %player%))" } }
+                  ]
+                },
+                {
+                  "action": "if_variable_less",
+                  "values": [
+                    { "name": "value", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                    { "name": "compare", "value": { "type": "number", "number": 2 } }
+                  ],
+                  "operations": [
+                    {
+                      "action": "set_variable_put_map_value",
+                      "values": [
+                        { "name": "map", "value": { "type": "variable", "variable": "av.cp", "scope": "game" } },
+                        { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                        { "name": "value", "value": { "type": "number", "number": 2 } }
+                      ]
+                    },
+                    {
+                      "action": "player_send_title",
+                      "values": [
+                        { "name": "title", "value": { "type": "text", "text": "&a&l✔ Чекпоинт 2", "parsing": "legacy" } },
+                        { "name": "subtitle", "value": { "type": "text", "text": "&fЛавина не прощает!", "parsing": "legacy" } },
+                        { "name": "fade_in", "value": { "type": "number", "number": 5 } },
+                        { "name": "stay", "value": { "type": "number", "number": 30 } },
+                        { "name": "fade_out", "value": { "type": "number", "number": 5 } }
+                      ]
+                    },
+                    {
+                      "action": "player_play_sound",
+                      "values": [
+                        { "name": "sound", "value": { "type": "sound", "sound": "minecraft:entity.player.levelup", "pitch": 1.5, "volume": 1.0 } },
+                        { "name": "location", "value": { "type": "game_value", "game_value": "location", "selection": "{\"type\":\"default\"}" } }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            { "action": "select_all_players", "values": [] },
+            {
+              "action": "if_player_in_area",
+              "values": [
+                { "name": "location_1", "value": { "type": "variable", "variable": "av.cp3a", "scope": "game" } },
+                { "name": "location_2", "value": { "type": "variable", "variable": "av.cp3b", "scope": "game" } },
+                { "name": "ignore_y_axis", "value": { "type": "enum", "enum": "FALSE" } },
+                { "name": "intersect_type", "value": { "type": "enum", "enum": "POINT" } },
+                { "name": "check_type", "value": { "type": "enum", "enum": "CONTAINS" } }
+              ],
+              "operations": [
+                {
+                  "action": "set_variable_value",
+                  "values": [
+                    { "name": "variable", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                    { "name": "value", "value": { "type": "number", "number": "%math(%entry(av.cp, %player%))" } }
+                  ]
+                },
+                {
+                  "action": "if_variable_less",
+                  "values": [
+                    { "name": "value", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                    { "name": "compare", "value": { "type": "number", "number": 3 } }
+                  ],
+                  "operations": [
+                    {
+                      "action": "set_variable_put_map_value",
+                      "values": [
+                        { "name": "map", "value": { "type": "variable", "variable": "av.cp", "scope": "game" } },
+                        { "name": "key", "value": { "type": "text", "text": "%player%", "parsing": "plain" } },
+                        { "name": "value", "value": { "type": "number", "number": 3 } }
+                      ]
+                    },
+                    {
+                      "action": "player_send_title",
+                      "values": [
+                        { "name": "title", "value": { "type": "text", "text": "&a&l✔ Чекпоинт 3", "parsing": "legacy" } },
+                        { "name": "subtitle", "value": { "type": "text", "text": "&fПоследний рывок!", "parsing": "legacy" } },
+                        { "name": "fade_in", "value": { "type": "number", "number": 5 } },
+                        { "name": "stay", "value": { "type": "number", "number": 30 } },
+                        { "name": "fade_out", "value": { "type": "number", "number": 5 } }
+                      ]
+                    },
+                    {
+                      "action": "player_play_sound",
+                      "values": [
+                        { "name": "sound", "value": { "type": "sound", "sound": "minecraft:entity.player.levelup", "pitch": 1.5, "volume": 1.0 } },
+                        { "name": "location", "value": { "type": "game_value", "game_value": "location", "selection": "{\"type\":\"default\"}" } }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "control_wait",
+              "values": [
+                { "name": "duration", "value": { "type": "number", "number": 10 } },
+                { "name": "time_unit", "value": { "type": "enum", "enum": "TICKS" } }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "position": 6,
+      "event": "player_respawn",
+      "operations": [
+        {
+          "action": "if_variable_equals",
+          "values": [
+            { "name": "value", "value": { "type": "variable", "variable": "av.run", "scope": "game" } },
+            { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 1 } ] } },
+            { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+          ],
+          "operations": [
+            { "action": "select_player_by_name", "values": [ { "name": "name_or_uuid", "value": { "type": "text", "text": "%player%", "parsing": "plain" } } ] },
+            { "action": "player_clear_potion_effects", "values": [] },
+            {
+              "action": "player_give_potion_effect",
+              "values": [
+                { "name": "potions", "value": { "type": "array", "values": [
+                  { "type": "potion", "potion": "minecraft:blindness", "amplifier": 0, "duration": 80 },
+                  { "type": "potion", "potion": "minecraft:slowness", "amplifier": 2, "duration": 80 }
+                ] } },
+                { "name": "overwrite", "value": { "type": "enum", "enum": "TRUE" } },
+                { "name": "show_icon", "value": { "type": "enum", "enum": "TRUE" } },
+                { "name": "particle_mode", "value": { "type": "enum", "enum": "REGULAR" } }
+              ]
+            },
+            {
+              "action": "set_variable_value",
+              "values": [
+                { "name": "variable", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                { "name": "value", "value": { "type": "number", "number": "%math(%entry(av.cp, %player%))" } }
+              ]
+            },
+            {
+              "action": "if_variable_equals",
+              "values": [
+                { "name": "value", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 0 } ] } },
+                { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+              ],
+              "operations": [
+                {
+                  "action": "player_teleport",
+                  "values": [
+                    { "name": "location", "value": { "type": "location", "x": 0, "y": 71, "z": 0 } }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "if_variable_equals",
+              "values": [
+                { "name": "value", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 1 } ] } },
+                { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+              ],
+              "operations": [
+                {
+                  "action": "player_teleport",
+                  "values": [
+                    { "name": "location", "value": { "type": "variable", "variable": "av.cp1t", "scope": "game" } }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "if_variable_equals",
+              "values": [
+                { "name": "value", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 2 } ] } },
+                { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+              ],
+              "operations": [
+                {
+                  "action": "player_teleport",
+                  "values": [
+                    { "name": "location", "value": { "type": "variable", "variable": "av.cp2t", "scope": "game" } }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "if_variable_equals",
+              "values": [
+                { "name": "value", "value": { "type": "variable", "variable": "c", "scope": "local" } },
+                { "name": "compare", "value": { "type": "array", "values": [ { "type": "number", "number": 3 } ] } },
+                { "name": "compare_type", "value": { "type": "enum", "enum": "ANY" } }
+              ],
+              "operations": [
+                {
+                  "action": "player_teleport",
+                  "values": [
+                    { "name": "location", "value": { "type": "variable", "variable": "av.cp3t", "scope": "game" } }
+                  ]
+                }
+              ]
+            },
+            { "action": "player_heal", "values": [ { "name": "heal", "value": { "type": "number", "number": 20 } } ] },
+            {
+              "action": "player_send_message",
+              "values": [
+                { "name": "messages", "value": { "type": "array", "values": [ { "type": "text", "text": "&b❄ Ты вернулся на свой чекпоинт. Не отставай!", "parsing": "legacy" } ] } },
+                { "name": "merging", "value": { "type": "enum", "enum": "SPACES" } }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "position": 7,
+      "event": "world_start",
+      "operations": [
+        {
+          "action": "set_variable_create_map",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.queue", "scope": "game" } }
+          ]
+        },
+        {
+          "action": "set_variable_create_map",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.wins", "scope": "game" } }
+          ]
+        },
+        {
+          "action": "set_variable_create_map",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.cp", "scope": "game" } }
+          ]
+        },
+        {
+          "action": "set_variable_create_map",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.alive", "scope": "game" } }
+          ]
+        },
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.qcount", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": 0 } }
+          ]
+        },
+        { "action": "select_all_players", "values": [] },
+        {
+          "action": "player_send_message",
+          "values": [
+            { "name": "messages", "value": { "type": "array", "values": [ { "type": "text", "text": "&b❄ Модуль «Лавина» загружен. ПКМ снежком — записаться в очередь!", "parsing": "legacy" } ] } },
+            { "name": "merging", "value": { "type": "enum", "enum": "SPACES" } }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "position": 8,
+      "event": "world_stop",
+      "operations": [
+        {
+          "action": "game_clear_region",
+          "values": [
+            { "name": "pos_1", "value": { "type": "location", "x": -12, "y": 50, "z": -40 } },
+            { "name": "pos_2", "value": { "type": "location", "x": 12, "y": 96, "z": 215 } }
+          ]
+        },
+        {
+          "action": "set_variable_value",
+          "values": [
+            { "name": "variable", "value": { "type": "variable", "variable": "av.run", "scope": "game" } },
+            { "name": "value", "value": { "type": "number", "number": 0 } }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "position": 9,
+      "event": "player_join",
+      "operations": [
+        {
+          "action": "select_player_by_name",
+          "values": [
+            { "name": "name_or_uuid", "value": { "type": "text", "text": "%player%", "parsing": "plain" } }
+          ]
+        },
+        {
+          "action": "player_give_items",
+          "values": [
+            { "name": "items", "value": { "type": "item", "item": "{Count:1b,id:\\\"minecraft:snowball\\\"}" } },
+            { "name": "amount", "value": { "type": "number", "number": 1 } }
+          ]
+        },
+        {
+          "action": "player_send_message",
+          "values": [
+            { "name": "messages", "value": { "type": "array", "values": [ { "type": "text", "text": "&b❄ ПКМ снежком — записаться в гонку от лавины!", "parsing": "legacy" } ] } },
+            { "name": "merging", "value": { "type": "enum", "enum": "SPACES" } }
+          ]
+        }
+      ]
+    }
+  ]
+}
